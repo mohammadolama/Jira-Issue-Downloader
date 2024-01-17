@@ -1,0 +1,15 @@
+github:
+  base_address: "https://api.github.com/users/{USER_NAME}/repos?per_page=100&page={I}"
+  deployment_address: "https://api.github.com/repos/{USER_NAME}/{REPO_NAME}/deployments"
+  environment_address: "https://api.github.com/repos/{USER_NAME}/{REPO_NAME}/environments"
+  issues_address: "https://api.github.com/repos/{USER_NAME}/{REPO_NAME}/issues?state=closed&per_page=1"
+  token: "Bearer {PUT YOUR PERSONAL ACCESS TOEKN HERE.}"
+
+logging:
+  level:
+    olama:
+      githubstats: TRACE
+    root: INFO
+
+server:
+  port: 8080

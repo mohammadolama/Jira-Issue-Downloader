@@ -1,4 +1,4 @@
-package olama.jira.issue.downloader.controller;
+package olama.jira.issue.downloader.model;
 
 public enum IdentifierType {
     ATTRIBUTE,

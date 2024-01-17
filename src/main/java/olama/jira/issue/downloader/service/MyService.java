@@ -2,8 +2,10 @@ package olama.jira.issue.downloader.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import lombok.extern.java.Log;
+import lombok.extern.log4j.Log4j2;
 import olama.jira.issue.downloader.model.*;
-import olama.jira.issue.downloader.controller.IdentifierType;
+import olama.jira.issue.downloader.model.IdentifierType;
 import olama.jira.issue.downloader.repository.Repository;
 import org.jsoup.nodes.Attribute;
 import org.jsoup.nodes.Document;
@@ -12,30 +14,28 @@ import org.jsoup.nodes.Node;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 @Service
+@Log4j2
 public class MyService {
 
     private final Repository repository;
 
-    private ObjectMapper objectMapper;
 
     public MyService(Repository repository) {
         this.repository = repository;
-        objectMapper = new ObjectMapper();
-        objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
     }
 
 
-    public Response createResult(Document document){
+    public Response createResult(Document document , String key){
 
         Response response = new Response();
         response.setPeople(createPeople(document));
         response.setDetails(createDetails(document));
         response.setDates(createDates(document));
         response.setDescription(createDescription(document));
+        repository.save(response , key);
         return response;
 
     }
@@ -47,32 +47,39 @@ public class MyService {
         for (Element value : values) {
             Attribute attribute = value.attribute("id");
             if (attribute != null) {
-                if (attribute.getValue().equals("type-val")) {
-                    String string = value.childNode(2).toString();
-                    details.setIssueType(string);
-                } else if (attribute.getValue().equals("priority-val")) {
-                    String string = value.childNode(2).toString();
-                    details.setPriority(string);
-                } else if (attribute.getValue().equals("versions-val")) {
-                    String string = value.childNode(1).childNode(1).childNode(0).toString();
-                    details.setAffectsVersion(string);
-                } else if (attribute.getValue().equals("status-val")) {
-                    String string = value.childNode(1).childNode(0).toString();
-                    details.setStatus(string);
-                } else if (attribute.getValue().equals("resolution-val")) {
-                    String string = value.childNode(0).toString();
-                    details.setResolution(string);
-                } else if (attribute.getValue().equals("components-val")) {
-                    List<Node> nodes = value.childNode(1).childNode(1).childNodes();
-                    List<String> list = nodes.stream().map(r -> r.toString()).toList();
-                    details.setComponents(list);
+                switch (attribute.getValue()) {
+                    case "type-val" -> {
+                        String string = value.childNode(2).toString();
+                        details.setIssueType(string);
+                    }
+                    case "priority-val" -> {
+                        String string = value.childNode(2).toString();
+                        details.setPriority(string);
+                    }
+                    case "versions-val" -> {
+                        String string = value.childNode(1).childNode(1).childNode(0).toString();
+                        details.setAffectsVersion(string);
+                    }
+                    case "status-val" -> {
+                        String string = value.childNode(1).childNode(0).toString();
+                        details.setStatus(string);
+                    }
+                    case "resolution-val" -> {
+                        String string = value.childNode(0).toString();
+                        details.setResolution(string);
+                    }
+                    case "components-val" -> {
+                        List<Node> nodes = value.childNode(1).childNode(1).childNodes();
+                        List<String> list = nodes.stream().map(Node::toString).toList();
+                        details.setComponents(list);
+                    }
                 }
             }
         }
         values = getElementsByIdentifier(document, "labels", IdentifierType.CLASS);
         for (Element value : values) {
             List<Node> nodes = value.childNodes();
-            List<String> list = nodes.stream().map(r -> r.toString()).toList();
+            List<String> list = nodes.stream().map(Node::toString).toList();
             details.setLabels(list);
         }
         values = getElementsByIdentifier(document, "value type-select", IdentifierType.CLASS);
@@ -107,13 +114,23 @@ public class MyService {
         People people = new People();
 
         List<Element> values = getElementsByIdentifier(document, "assignee-val", IdentifierType.ID);
-        String string1 = values.get(0).childNode(1).childNode(2).toString().trim();
-        people.setAssignee(string1);
+        String string1;
+        try {
+             string1= values.get(0).childNode(1).childNode(2).toString().trim();
+            people.setAssignee(string1);
+        }catch (Exception e){
+            string1 = values.get(0).childNode(2).toString().trim();
+            people.setAssignee(string1);
+        }
 
         values = getElementsByIdentifier(document, "reporter-val", IdentifierType.ID);
-        string1 = values.get(0).childNode(1).childNode(2).toString().trim();
-        people.setReporter(string1);
-
+        try {
+            string1 = values.get(0).childNode(1).childNode(2).toString().trim();
+            people.setReporter(string1);
+        }catch (Exception e){
+            string1 = values.get(0).childNode(2).toString().trim();
+            people.setAssignee(string1);
+        }
         values = getElementsByIdentifier(document, "vote-data", IdentifierType.ID);
         string1 = values.get(0).childNode(0).toString().replace("\n" , "").trim();
         people.setVotes(Integer.parseInt(string1));
@@ -148,7 +165,6 @@ public class MyService {
         List<Element> values = getElementsByIdentifier(document, "description-val", IdentifierType.ID);
 
         List<Node> nodes = values.get(0).childNode(1).childNodes();
-        StringBuilder builder = new StringBuilder();
         List<String> res = new ArrayList<>();
         for (Node node : nodes) {
             if (!node.toString().trim().isBlank()){
@@ -158,7 +174,6 @@ public class MyService {
         description.setDescription(res);
         return description;
     }
-
 
     private List<Element> getElementsByIdentifier(Document document ,String identifier, IdentifierType identifiertype){
         List<Element> elements = new ArrayList<>();
@@ -174,7 +189,7 @@ public class MyService {
             case CLASS:
                 return document.getElementsByClass(identifier);
             default:
-                System.out.println("Not a valid Identifier type");
+                log.debug("Not a valid Identifier type");
         }
 
         return elements;

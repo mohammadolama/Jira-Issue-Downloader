@@ -2,6 +2,8 @@ package olama.jira.issue.downloader.model;
 
 import lombok.Data;
 
+import java.util.List;
+
 @Data
 public class Response {
 
@@ -12,4 +14,6 @@ public class Response {
     private Dates dates;
 
     private Description description;
+
+    private List<Comments> comments;
 }

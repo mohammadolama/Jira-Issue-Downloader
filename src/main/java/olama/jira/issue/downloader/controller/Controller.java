@@ -1,10 +1,6 @@
 package olama.jira.issue.downloader.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.opendevl.JFlat;
-import com.github.wnameless.json.flattener.JsonFlattener;
 import lombok.extern.log4j.Log4j2;
-import olama.jira.issue.downloader.model.Details;
 import olama.jira.issue.downloader.model.Response;
 import olama.jira.issue.downloader.service.MyService;
 import org.jsoup.Jsoup;
@@ -40,18 +36,7 @@ public class Controller {
 
         Document documentFromURL = getDocumentFromURL(url);
 
-        Response result = service.createResult(documentFromURL);
-
-        ObjectMapper objectMapper = new ObjectMapper();
-        String s = objectMapper.writeValueAsString(result);
-
-        JFlat flatMe = new JFlat(s);
-        flatMe
-                .json2Sheet()
-                .headerSeparator(",")
-                .write2csv("test.csv");
-
-        return result;
+        return service.createResult(documentFromURL , key);
     }
 
     public Document getDocumentFromURL(String resourceUrl) throws IOException {

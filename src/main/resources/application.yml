@@ -1,14 +1,8 @@
 github:
-  base_address: "https://api.github.com/users/{USER_NAME}/repos?per_page=100&page={I}"
-  deployment_address: "https://api.github.com/repos/{USER_NAME}/{REPO_NAME}/deployments"
-  environment_address: "https://api.github.com/repos/{USER_NAME}/{REPO_NAME}/environments"
-  issues_address: "https://api.github.com/repos/{USER_NAME}/{REPO_NAME}/issues?state=closed&per_page=1"
-  token: "Bearer {PUT YOUR PERSONAL ACCESS TOEKN HERE.}"
-
+  base_address: "https://issues.apache.org/jira/browse/{ISSUE}"
 logging:
   level:
-    olama:
-      githubstats: TRACE
+    olama: TRACE
     root: INFO
 
 server:

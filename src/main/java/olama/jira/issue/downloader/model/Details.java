@@ -1,4 +1,4 @@
-package olama.jira.issue.downloader;
+package olama.jira.issue.downloader.model;
 
 import lombok.Data;
 
